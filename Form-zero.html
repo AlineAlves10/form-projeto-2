@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acme Corporation</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+    </style>
+</head>
+<body>
+    <h2>Formulario Seguro!!/h2>
+    <form id="cadastro">
+        <label for="nome">Nome:</label> 
+        <!-- Nome: adicionei validação HTML para garantir que apenas letras e espaços sejam aceitos, para evitar que o usuário insira scripts ou códigos potencialmente perigosos -->
+        <input id="nome" name="nome" pattern="^[A-Za-zÀ-ÿ\s]+$">
+        <br><br>
+        <!-- Email: usei o tipo 'email' para validação automática de formato-->
+        <label for="email">E-mail:</label>
+        <input id="email" name="email" type="email" required>
+        <br><br>
+        <label for="telefone">Telefone:</label>
+        <input id="telefone" name="telefone">
+        <br><br>
+        <button type="submit">Salvar!</button>
+    </form>
+
+    <script>
+        // Esta função substitui caracteres especiais por suas entidades HTML seguras
+    // Previne que valores maliciosos como "script alert" seja interpretado como codigo 
+        function escapeHTML(str) {
+            return str.replace(/[&<>"']/g, function (m) {
+                return ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                })[m];
+            });
+        }
+
+        document.getElementById("cadastro").addEventListener("submit", function(event) {
+            event.preventDefault();
+            // Substitui diretamente a leitura de valores pela versão sanitizada
+            let nome = escapeHTML(document.getElementById("nome").value);      // Proteção contra XSS
+            let email = escapeHTML(document.getElementById("email").value);    // Proteção contra XSS
+            let telefone = escapeHTML(document.getElementById("telefone").value);  // Proteção contra XSS
+
+            let dados = localStorage.getItem("cadastro_local") ? JSON.parse(localStorage.getItem("cadastro_local")) : [];
+            dados.push({ nome, email, telefone });
+            localStorage.setItem("cadastro_local", JSON.stringify(dados));
+
+            let novaPagina = `
+                <!DOCTYPE html>
+                <html lang="pt">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Dados Cadastrados</title>
+                    <style> 
+                        body { font-family: Arial, sans-serif; padding: 20px; } 
+                        table { width: 100%; border-collapse: collapse; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                    </style>
+                </head>
+                <body>
+                    <h2>Dados Cadastrados</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>E-mail</th>
+                                <th>Telefone</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${dados.map(d => `<tr><td>${d.nome}</td><td>${d.email}</td><td>${d.telefone}</td></tr>`).join("")}
+                        </tbody>
+                    </table>
+                </body>
+                </html>
+            `;
+        
+            let novaAba = window.open("", "_blank", "noopener,noreferrer"); // Melhoria de segurança ao abrir nova aba
+            novaAba.document.write(novaPagina);
+            novaAba.document.close();
+        });
+    </script>
+</body>
+</html>
